@@ -21,7 +21,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      InAppWebView(
+      body: InAppWebView(
         initialUrlRequest: URLRequest(url: WebUri("https://flutter.dev")),
       )
     );
