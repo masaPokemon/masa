@@ -37,6 +37,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_inappwebview: ^6.0.0
   fwfh_webview: ^0.15.2
+  webview_flutter_web: ^0.2.3+2
 
 dev_dependencies:
   flutter_test:
