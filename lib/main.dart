@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter_inappwebview_platform_interface/src/web_uri.dart';
 
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,17 +11,18 @@ Future main() async {
     await AndroidInAppWebViewController.setWebContentsDebuggingEnabled(true);
   }
 
-  runApp(const MaterialApp(home: MyApp()));
+  runApp(MaterialApp(
+      home: new MyApp()
+  ));
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
-
   @override
-  createState() => _MyAppState();
+  _MyAppState createState() => new _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
+
   final GlobalKey webViewKey = GlobalKey();
 
   InAppWebViewController? webViewController;
@@ -70,146 +70,123 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: const Text("Official InAppWebView website")),
-        body: WillPopScope(
-          onWillPop: () async {
-            if (webViewController == null) {
-              return true;
-            }
-            final canGoBackWebPage = await webViewController!.canGoBack();
-            if (canGoBackWebPage) {
-              webViewController!.goBack();
-              return false;
-            }
-
-            return true;
-          },
-          child: SafeArea(
+          appBar: AppBar(title: Text("Official InAppWebView website")),
+          body: SafeArea(
               child: Column(children: <Widget>[
-            TextField(
-              decoration: const InputDecoration(prefixIcon: Icon(Icons.search)),
-              controller: urlController,
-              keyboardType: TextInputType.url,
-              onSubmitted: (value) {
-                var url = Uri.parse(value);
-                if (url.scheme.isEmpty) {
-                  // set google top page if search query is empty.
-                  url = Uri.parse("https://www.google.com/search?q=$value");
-                }
-                // webViewController load url
-                webViewController?.loadUrl(urlRequest: URLRequest(url: url));
-              },
-            ),
-            Expanded(
-              child: Stack(
-                children: [
-                  InAppWebView(
-                    key: webViewKey,
-                    initialUrlRequest:
-                        URLRequest(url: Uri.parse("https://inappwebview.dev/")),
-                    initialOptions: options,
-                    pullToRefreshController: pullToRefreshController,
-                    onWebViewCreated: (controller) {
-                      webViewController = controller;
-                    },
-                    onLoadStart: (controller, url) {
-                      setState(() {
-                        this.url = url.toString();
-                        urlController.text = this.url;
-                      });
-                    },
-                    androidOnPermissionRequest:
-                        (controller, origin, resources) async {
-                      return PermissionRequestResponse(
-                        resources: resources,
-                        action: PermissionRequestResponseAction.GRANT,
-                      );
-                    },
-                    shouldOverrideUrlLoading:
-                        (controller, navigationAction) async {
-                      var uri = navigationAction.request.url!;
-
-                      if (![
-                        "http",
-                        "https",
-                        "file",
-                        "chrome",
-                        "data",
-                        "javascript",
-                        "about"
-                      ].contains(uri.scheme)) {
-                        if (await canLaunchUrl(Uri.parse(url))) {
-                          // Launch the App
-                          await launchUrl(
-                            Uri.parse(url),
-                          );
-                          // and cancel the request
-                          return NavigationActionPolicy.CANCEL;
-                        }
-                      }
-
-                      return NavigationActionPolicy.ALLOW;
-                    },
-                    onLoadStop: (controller, url) async {
-                      pullToRefreshController.endRefreshing();
-                      setState(() {
-                        this.url = url.toString();
-                        urlController.text = this.url;
-                      });
-                    },
-                    onLoadError: (controller, url, code, message) {
-                      pullToRefreshController.endRefreshing();
-                    },
-                    onProgressChanged: (controller, progress) {
-                      if (progress == 100) {
-                        pullToRefreshController.endRefreshing();
-                      }
-                      setState(() {
-                        this.progress = progress / 100;
-                        urlController.text = url;
-                      });
-                    },
-                    onUpdateVisitedHistory: (controller, url, androidIsReload) {
-                      setState(() {
-                        this.url = url.toString();
-                        urlController.text = this.url;
-                      });
-                    },
-                    onConsoleMessage: (controller, consoleMessage) {
-                      print(consoleMessage);
-                    },
+                TextField(
+                  decoration: InputDecoration(
+                      prefixIcon: Icon(Icons.search)
                   ),
-                  progress < 1.0
-                      ? LinearProgressIndicator(value: progress)
-                      : Container(),
-                ],
-              ),
-            ),
-            ButtonBar(
-              alignment: MainAxisAlignment.center,
-              children: <Widget>[
-                ElevatedButton(
-                  child: const Icon(Icons.arrow_back),
-                  onPressed: () {
-                    webViewController?.goBack();
+                  controller: urlController,
+                  keyboardType: TextInputType.url,
+                  onSubmitted: (value) {
+                    var url = Uri.parse(value);
+                    if (url.scheme.isEmpty) {
+                      url = Uri.parse("https://www.google.com/search?q=" + value);
+                    }
+                    webViewController?.loadUrl(
+                        urlRequest: URLRequest(url: url));
                   },
                 ),
-                ElevatedButton(
-                  child: const Icon(Icons.arrow_forward),
-                  onPressed: () {
-                    webViewController?.goForward();
-                  },
+                Expanded(
+                  child: Stack(
+                    children: [
+                      InAppWebView(
+                        key: webViewKey,
+                        initialUrlRequest:
+                        URLRequest(url: Uri.parse("https://inappwebview.dev/")),
+                        initialOptions: options,
+                        pullToRefreshController: pullToRefreshController,
+                        onWebViewCreated: (controller) {
+                          webViewController = controller;
+                        },
+                        onLoadStart: (controller, url) {
+                          setState(() {
+                            this.url = url.toString();
+                            urlController.text = this.url;
+                          });
+                        },
+                        androidOnPermissionRequest: (controller, origin, resources) async {
+                          return PermissionRequestResponse(
+                              resources: resources,
+                              action: PermissionRequestResponseAction.GRANT);
+                        },
+                        shouldOverrideUrlLoading: (controller, navigationAction) async {
+                          var uri = navigationAction.request.url!;
+
+                          if (![ "http", "https", "file", "chrome",
+                            "data", "javascript", "about"].contains(uri.scheme)) {
+                            if (await canLaunch(url)) {
+                              // Launch the App
+                              await launch(
+                                url,
+                              );
+                              // and cancel the request
+                              return NavigationActionPolicy.CANCEL;
+                            }
+                          }
+
+                          return NavigationActionPolicy.ALLOW;
+                        },
+                        onLoadStop: (controller, url) async {
+                          pullToRefreshController.endRefreshing();
+                          setState(() {
+                            this.url = url.toString();
+                            urlController.text = this.url;
+                          });
+                        },
+                        onLoadError: (controller, url, code, message) {
+                          pullToRefreshController.endRefreshing();
+                        },
+                        onProgressChanged: (controller, progress) {
+                          if (progress == 100) {
+                            pullToRefreshController.endRefreshing();
+                          }
+                          setState(() {
+                            this.progress = progress / 100;
+                            urlController.text = this.url;
+                          });
+                        },
+                        onUpdateVisitedHistory: (controller, url, androidIsReload) {
+                          setState(() {
+                            this.url = url.toString();
+                            urlController.text = this.url;
+                          });
+                        },
+                        onConsoleMessage: (controller, consoleMessage) {
+                          print(consoleMessage);
+                        },
+                      ),
+                      progress < 1.0
+                          ? LinearProgressIndicator(value: progress)
+                          : Container(),
+                    ],
+                  ),
                 ),
-                ElevatedButton(
-                  child: const Icon(Icons.refresh),
-                  onPressed: () {
-                    webViewController?.reload();
-                  },
+                ButtonBar(
+                  alignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    ElevatedButton(
+                      child: Icon(Icons.arrow_back),
+                      onPressed: () {
+                        webViewController?.goBack();
+                      },
+                    ),
+                    ElevatedButton(
+                      child: Icon(Icons.arrow_forward),
+                      onPressed: () {
+                        webViewController?.goForward();
+                      },
+                    ),
+                    ElevatedButton(
+                      child: Icon(Icons.refresh),
+                      onPressed: () {
+                        webViewController?.reload();
+                      },
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ])),
-        ));
+              ]))
+    );
   }
 }
-
