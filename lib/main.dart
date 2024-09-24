@@ -1,23 +1,21 @@
 import 'dart:async';
+import 'dart:collection';
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:core';
-import 'package:http/http.dart' as http;
 
 Future main() async {
+  // it should be the first line in main method
   WidgetsFlutterBinding.ensureInitialized();
-
   if (Platform.isAndroid) {
     await AndroidInAppWebViewController.setWebContentsDebuggingEnabled(true);
   }
-
-  runApp(MaterialApp(
-      home: new MyApp()
-  ));
+  // rest of your app code
+  runApp(MyApp());
 }
-
 class MyApp extends StatefulWidget {
   @override
   _MyAppState createState() => new _MyAppState();
@@ -71,7 +69,8 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return MaterialApp(
+      home: Scaffold(
           appBar: AppBar(title: Text("Official InAppWebView website")),
           body: SafeArea(
               child: Column(children: <Widget>[
@@ -82,9 +81,9 @@ class _MyAppState extends State<MyApp> {
                   controller: urlController,
                   keyboardType: TextInputType.url,
                   onSubmitted: (value) {
-                    var url = http.get(Uri.parse(value));
+                    var url = Uri.parse(value);
                     if (url.scheme.isEmpty) {
-                      url = http.get(Uri.parse("https://www.google.com/search?q=" + value));
+                      url = Uri.parse("https://www.google.com/search?q=" + value);
                     }
                     webViewController?.loadUrl(
                         urlRequest: URLRequest(url: url));
@@ -188,7 +187,7 @@ class _MyAppState extends State<MyApp> {
                     ),
                   ],
                 ),
-              ]))
+              ]))),
     );
   }
 }
