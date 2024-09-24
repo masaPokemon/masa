@@ -38,6 +38,7 @@ dependencies:
   flutter_inappwebview: ^6.0.0
   fwfh_webview: ^0.15.2
   webview_flutter_web: ^0.2.3+2
+  webview_all: ^0.4.5
 
 dev_dependencies:
   flutter_test:
