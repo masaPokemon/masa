@@ -81,9 +81,9 @@ class _MyAppState extends State<MyApp> {
                   controller: urlController,
                   keyboardType: TextInputType.url,
                   onSubmitted: (value) {
-                    var url = Uri.parse(value);
+                    var url = http.get(Uri.parse(value));
                     if (url.scheme.isEmpty) {
-                      url = Uri.parse("https://www.google.com/search?q=" + value);
+                      url = http.get(Uri.parse("https://www.google.com/search?q=" + value));
                     }
                     webViewController?.loadUrl(
                         urlRequest: URLRequest(url: url));
