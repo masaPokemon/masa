@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_inappwebview_platform_interface/src/web_uri.dart';
 
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -94,7 +95,7 @@ class _MyAppState extends State<MyApp> {
                       InAppWebView(
                         key: webViewKey,
                         initialUrlRequest:
-                        URLRequest(url: Uri.parse("https://inappwebview.dev/")),
+                        URLRequest(url: WebUri?.parse("https://inappwebview.dev/")),
                         initialOptions: options,
                         pullToRefreshController: pullToRefreshController,
                         onWebViewCreated: (controller) {
