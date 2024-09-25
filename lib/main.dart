@@ -1,89 +1,203 @@
-// Copyright 2013 The Flutter Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
-// ignore_for_file: public_member_api_docs
-
 import 'dart:async';
-import 'dart:typed_data';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:webview_flutter_platform_interface/webview_flutter_platform_interface.dart';
-import 'package:webview_flutter_web/webview_flutter_web.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
-void main() {
-  WebViewPlatform.instance = WebWebViewPlatform();
-  runApp(const MaterialApp(home: _WebViewExample()));
+import 'chrome_safari_browser_example.screen.dart';
+import 'headless_in_app_webview.screen.dart';
+import 'in_app_webiew_example.screen.dart';
+import 'in_app_browser_example.screen.dart';
+import 'web_authentication_session_example.screen.dart';
+import 'pointer_interceptor.dart';
+
+// import 'package:path_provider/path_provider.dart';
+// import 'package:permission_handler/permission_handler.dart';
+
+final localhostServer = InAppLocalhostServer(documentRoot: 'assets');
+WebViewEnvironment? webViewEnvironment;
+
+Future main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // await Permission.camera.request();
+  // await Permission.microphone.request();
+  // await Permission.storage.request();
+
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
+    final availableVersion = await WebViewEnvironment.getAvailableVersion();
+    assert(availableVersion != null, 'Failed to find an installed WebView2 runtime or non-stable Microsoft Edge installation.');
+
+    webViewEnvironment = await WebViewEnvironment.create(settings:
+      WebViewEnvironmentSettings(
+          userDataFolder: 'custom_path'
+      ));
+  }
+
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    await InAppWebViewController.setWebContentsDebuggingEnabled(kDebugMode);
+  }
+
+  runApp(MyApp());
 }
 
-class _WebViewExample extends StatefulWidget {
-  const _WebViewExample();
-
-  @override
-  _WebViewExampleState createState() => _WebViewExampleState();
-}
-
-class _WebViewExampleState extends State<_WebViewExample> {
-  final PlatformWebViewController _controller = PlatformWebViewController(
-    const PlatformWebViewControllerCreationParams(),
-  )..loadRequest(
-      LoadRequestParams(
-        uri: Uri.parse('https://flutter.dev'),
+PointerInterceptor myDrawer({required BuildContext context}) {
+  var children = [
+    ListTile(
+      title: Text('InAppWebView'),
+      onTap: () {
+        Navigator.pushReplacementNamed(context, '/');
+      },
+    ),
+    ListTile(
+      title: Text('InAppBrowser'),
+      onTap: () {
+        Navigator.pushReplacementNamed(context, '/InAppBrowser');
+      },
+    ),
+    ListTile(
+      title: Text('ChromeSafariBrowser'),
+      onTap: () {
+        Navigator.pushReplacementNamed(context, '/ChromeSafariBrowser');
+      },
+    ),
+    ListTile(
+      title: Text('WebAuthenticationSession'),
+      onTap: () {
+        Navigator.pushReplacementNamed(context, '/WebAuthenticationSession');
+      },
+    ),
+    ListTile(
+      title: Text('HeadlessInAppWebView'),
+      onTap: () {
+        Navigator.pushReplacementNamed(context, '/HeadlessInAppWebView');
+      },
+    ),
+  ];
+  if (kIsWeb) {
+    children = [
+      ListTile(
+        title: Text('InAppWebView'),
+        onTap: () {
+          Navigator.pushReplacementNamed(context, '/');
+        },
+      )
+    ];
+  } else if (defaultTargetPlatform == TargetPlatform.macOS) {
+    children = [
+      ListTile(
+        title: Text('InAppWebView'),
+        onTap: () {
+          Navigator.pushReplacementNamed(context, '/');
+        },
       ),
-    );
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Flutter WebView example'),
-        actions: <Widget>[
-          _SampleMenu(_controller),
+      ListTile(
+        title: Text('InAppBrowser'),
+        onTap: () {
+          Navigator.pushReplacementNamed(context, '/InAppBrowser');
+        },
+      ),
+      ListTile(
+        title: Text('WebAuthenticationSession'),
+        onTap: () {
+          Navigator.pushReplacementNamed(context, '/WebAuthenticationSession');
+        },
+      ),
+      ListTile(
+        title: Text('HeadlessInAppWebView'),
+        onTap: () {
+          Navigator.pushReplacementNamed(context, '/HeadlessInAppWebView');
+        },
+      ),
+    ];
+  } else if (defaultTargetPlatform == TargetPlatform.windows ||
+      defaultTargetPlatform == TargetPlatform.linux) {
+    children = [
+      ListTile(
+        title: Text('InAppWebView'),
+        onTap: () {
+          Navigator.pushReplacementNamed(context, '/');
+        },
+      ),
+      ListTile(
+        title: Text('InAppBrowser'),
+        onTap: () {
+          Navigator.pushReplacementNamed(context, '/InAppBrowser');
+        },
+      ),
+      ListTile(
+        title: Text('HeadlessInAppWebView'),
+        onTap: () {
+          Navigator.pushReplacementNamed(context, '/HeadlessInAppWebView');
+        },
+      ),
+    ];
+  }
+  return PointerInterceptor(
+    child: Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: <Widget>[
+          DrawerHeader(
+            child: Text('flutter_inappwebview example'),
+            decoration: BoxDecoration(
+              color: Colors.blue,
+            ),
+          ),
+          ...children
         ],
       ),
-      body: PlatformWebViewWidget(
-        PlatformWebViewWidgetCreationParams(controller: _controller),
-      ).build(context),
-    );
+    ),
+  );
+}
+
+class MyApp extends StatefulWidget {
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
   }
-}
 
-enum _MenuOptions {
-  doPostRequest,
-}
-
-class _SampleMenu extends StatelessWidget {
-  const _SampleMenu(this.controller);
-
-  final PlatformWebViewController controller;
+  @override
+  void dispose() {
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return PopupMenuButton<_MenuOptions>(
-      onSelected: (_MenuOptions value) {
-        switch (value) {
-          case _MenuOptions.doPostRequest:
-            _onDoPostRequest(controller);
-        }
-      },
-      itemBuilder: (BuildContext context) => <PopupMenuItem<_MenuOptions>>[
-        const PopupMenuItem<_MenuOptions>(
-          value: _MenuOptions.doPostRequest,
-          child: Text('Post Request'),
-        ),
-      ],
-    );
-  }
-
-  Future<void> _onDoPostRequest(PlatformWebViewController controller) async {
-    final LoadRequestParams params = LoadRequestParams(
-      uri: Uri.parse('https://httpbin.org/post'),
-      method: LoadRequestMethod.post,
-      headers: const <String, String>{
-        'foo': 'bar',
-        'Content-Type': 'text/plain'
-      },
-      body: Uint8List.fromList('Test Body'.codeUnits),
-    );
-    await controller.loadRequest(params);
+    if (kIsWeb) {
+      return MaterialApp(initialRoute: '/', routes: {
+        '/': (context) => InAppWebViewExampleScreen(),
+      });
+    }
+    if (defaultTargetPlatform == TargetPlatform.macOS) {
+      return MaterialApp(initialRoute: '/', routes: {
+        '/': (context) => InAppWebViewExampleScreen(),
+        '/InAppBrowser': (context) => InAppBrowserExampleScreen(),
+        '/HeadlessInAppWebView': (context) =>
+            HeadlessInAppWebViewExampleScreen(),
+        '/WebAuthenticationSession': (context) =>
+            WebAuthenticationSessionExampleScreen(),
+      });
+    } else if (defaultTargetPlatform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.linux) {
+      return MaterialApp(initialRoute: '/', routes: {
+        '/': (context) => InAppWebViewExampleScreen(),
+        '/InAppBrowser': (context) => InAppBrowserExampleScreen(),
+        '/HeadlessInAppWebView': (context) =>
+            HeadlessInAppWebViewExampleScreen(),
+      });
+    }
+    return MaterialApp(initialRoute: '/', routes: {
+      '/': (context) => InAppWebViewExampleScreen(),
+      '/InAppBrowser': (context) => InAppBrowserExampleScreen(),
+      '/ChromeSafariBrowser': (context) => ChromeSafariBrowserExampleScreen(),
+      '/HeadlessInAppWebView': (context) => HeadlessInAppWebViewExampleScreen(),
+      '/WebAuthenticationSession': (context) =>
+          WebAuthenticationSessionExampleScreen(),
+    });
   }
 }
