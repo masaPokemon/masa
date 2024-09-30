@@ -17,7 +17,7 @@ class TodoService extends ChangeNotifier {
   }
 
   void addTitle(title) {
-    dataPath.document().setData({'title': title, 'createAt': DateTime.now()});
+    dataPath.document().setData({'title': title});
   }
 
   void deleteDocument(docId) {
