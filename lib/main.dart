@@ -1,145 +1,108 @@
+import 'dart:io';
+
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:permission_handler/permission_handler.dart';
 
-import 'package:bluetooth_print_plus/bluetooth_print_plus.dart';
-
-import 'function_page.dart';
+import 'package:flutter/services.dart';
+import 'package:bluetooth_info/bluetooth_info.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(MaterialApp(
+    home: BluetoothInfoExample(),
+  ));
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class BluetoothInfoExample extends StatefulWidget {
+  const BluetoothInfoExample({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // TODO: implement build
-    return const MaterialApp(
-      home: HomePage(),
-    );
-  }
+  State<BluetoothInfoExample> createState() => _BluetoothInfoExampleState();
 }
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
-
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
-  final _bluetoothPrintPlus = BluetoothPrintPlus.instance;
-  bool _connected = false;
-  BluetoothDevice? _device;
-
+class _BluetoothInfoExampleState extends State<BluetoothInfoExample> {
   @override
   void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(Duration(milliseconds: 1000), () async {
+        await isBTPermissionGiven();
+      });
+    });
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => initBluetooth());
   }
 
-  Future<void> initBluetooth() async {
-    bool isConnected = await _bluetoothPrintPlus.isConnected ?? false;
-    _bluetoothPrintPlus.state.listen((state) {
-      print('********** cur device status: $state **********');
-      switch (state) {
-        case BluetoothPrintPlus.connected:
-          setState(() {
-            if (_device == null) return;
-            _connected = true;
-            _bluetoothPrintPlus.stopScan();
-            Navigator.of(context).push(
-                MaterialPageRoute(builder: (ctx) => FunctionPage(_device!)));
-          });
-          break;
-        case BluetoothPrintPlus.disconnected:
-          setState(() {
-            _device = null;
-            _connected = false;
-          });
-          break;
-        default:
-          break;
+  Future<bool> isBTPermissionGiven() async {
+    if (Platform.isIOS) {
+      if (!await Permission.bluetooth.isRestricted) {
+        return true;
+      } else {
+        var response = await [Permission.bluetooth].request();
+        return response[Permission.bluetooth]?.isGranted == true;
       }
-    });
-
-    if (!mounted) return;
-
-    if (isConnected) {
-      setState(() {
-        _connected = true;
-      });
+    } else if (Platform.isAndroid) {
+      var isAndroidS = (int.tryParse(
+                  (await DeviceInfoPlugin().androidInfo).version.release) ??
+              0) >=
+          11;
+      if (isAndroidS) {
+        if (await Permission.bluetoothScan.isGranted) {
+          return true;
+        } else {
+          var response = await [
+            Permission.bluetoothScan,
+            Permission.bluetoothConnect
+          ].request();
+          return response[Permission.bluetoothScan]?.isGranted == true &&
+              response[Permission.bluetoothConnect]?.isGranted == true;
+        }
+      } else {
+        return true;
+      }
     }
+    return false;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('BluetoothPrintPlus'),
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-                child: StreamBuilder<List<BluetoothDevice>>(
-              stream: _bluetoothPrintPlus.scanResults,
-              initialData: [],
-              builder: (c, snapshot) => ListView(
-                children: snapshot.data!
-                    .map((d) => Container(
-                          padding: const EdgeInsets.only(
-                              left: 10, right: 10, bottom: 5),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                  child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(d.name ?? ''),
-                                  Text(
-                                    d.address ?? 'null',
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                        fontSize: 12, color: Colors.grey),
-                                  ),
-                                  const Divider(),
-                                ],
-                              )),
-                              const SizedBox(
-                                width: 10,
-                              ),
-                              ElevatedButton(
-                                onPressed: () async {
-                                  _bluetoothPrintPlus.connect(d);
-                                  _device = d;
-                                },
-                                child: const Text("connect"),
-                              )
-                            ],
-                          ),
-                        ))
-                    .toList(),
+      appBar: AppBar(title: Text('Bluetooth Info Example')),
+      body: Container(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton(
+                onPressed: () => _getDeviceName(),
+                child: Text('Get Device Name'),
               ),
-            )),
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-              width: double.infinity,
-              height: 60,
-              child: ElevatedButton(
-                child: const Text("Search", style: TextStyle(fontSize: 16)),
-                onPressed: () {
-                  _bluetoothPrintPlus.isAvailable;
-                  _bluetoothPrintPlus.startScan(
-                      timeout: const Duration(seconds: 30));
-                },
+              ElevatedButton(
+                onPressed: () => _getDeviceAddress(),
+                child: Text('Get Device Address'),
               ),
-            )
-          ],
+              ElevatedButton(
+                onPressed: () => _checkBluetoothStatus(),
+                child: Text('Check Bluetooth Status'),
+              ),
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  void _getDeviceName() async {
+    String deviceName = await BluetoothInfo.getDeviceName();
+    print('Device Name: $deviceName');
+  }
+
+  void _getDeviceAddress() async {
+    String deviceAddress = await BluetoothInfo.getDeviceAddress();
+    print('Device Address: $deviceAddress');
+  }
+
+  void _checkBluetoothStatus() async {
+    bool isBluetoothEnabled = await BluetoothInfo.isBluetoothEnabled();
+    print('Bluetooth Enabled: $isBluetoothEnabled');
   }
 }
