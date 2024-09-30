@@ -1,62 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:qrcode_reader_web/qrcode_reader_web.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+void main() => runApp(const MaterialApp(home: MyHome()));
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const MyHomePage(),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key}) : super(key: key);
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  final List<QRCodeCapture> list = [];
+class MyHome extends StatelessWidget {
+  const MyHome({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Example App"),
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            QRCodeReaderSquareWidget(
-              onDetect: (QRCodeCapture capture) => setState(() => list.add(capture)),
-              size: 250,
-            ),
-            QRCodeReaderTransparentWidget(
-              onDetect: (QRCodeCapture capture) => setState(() => list.add(capture)),
-              targetSize: 250,
-            ),
-            Expanded(
-              child: ListView.builder(
-                itemCount: list.length,
-                itemBuilder: (_, index) {
-                  return ListTile(title: Text(list[index].raw));
-                },
-              ),
-            ),
-          ],
-        ),
+      appBar: AppBar(title: const Text('Mobile Scanner')),
+      body: MobileScanner(
+        // fit: BoxFit.contain,
+        onDetect: (capture) {
+          final List<Barcode> barcodes = capture.barcodes;
+          // final Uint8List? image = capture.image;
+          for (final barcode in barcodes) {
+            debugPrint('Barcode found! ${barcode.rawValue}');
+          }
+        },
       ),
     );
   }
