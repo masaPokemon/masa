@@ -9,7 +9,7 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  ai_barcode_scanner: ^5.2.2
+  ai_barcode_scanner: ^5.1.1+2
 
 dev_dependencies:
   flutter_test:
