@@ -1,100 +1,92 @@
+import 'package:ai_barcode_scanner/ai_barcode_scanner.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  runApp(MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'ポイントシステム',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: PointSystemPage(),
+    return const MaterialApp(
+      home: HomePage(),
     );
   }
 }
 
-class PointSystemPage extends StatefulWidget {
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
   @override
-  _PointSystemPageState createState() => _PointSystemPageState();
+  State<HomePage> createState() => _HomePageState();
 }
 
-class _PointSystemPageState extends State<PointSystemPage> {
-  int _points = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadPoints();
-  }
-
-  // ポイントをロード
-  _loadPoints() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _points = prefs.getInt('points') ?? 0;
-    });
-  }
-
-  // ポイントを保存
-  _savePoints() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setInt('points', _points);
-  }
-
-  // ポイントを加算
-  void _addPoints() {
-    setState(() {
-      _points += 10;
-    });
-    _savePoints();
-  }
-
-  // ポイントを減算
-  void _subtractPoints() {
-    setState(() {
-      _points = _points > 0 ? _points - 10 : 0;
-    });
-    _savePoints();
-  }
-
+class _HomePageState extends State<HomePage> {
+  String barcode = 'Tap  to scan';
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('ポイントシステム'),
+        title: const Text(' Scanner'),
       ),
       body: Center(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              '現在のポイント:',
-              style: TextStyle(fontSize: 24),
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ElevatedButton(
+              child: const Text('Scan Barcode'),
+              onPressed: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => AiBarcodeScanner(
+                      onDispose: () {
+                        /// This is called when the barcode scanner is disposed.
+                        /// You can write your own logic here.
+                        debugPrint("Barcode scanner disposed!");
+                      },
+                      hideGalleryButton: false,
+                      controller: MobileScannerController(
+                        detectionSpeed: DetectionSpeed.noDuplicates,
+                      ),
+                      onDetect: (BarcodeCapture capture) {
+                        /// The row string scanned barcode value
+                        final String? scannedValue =
+                            capture.barcodes.first.rawValue;
+                        debugPrint("Barcode scanned: $scannedValue");
+
+                        /// The `Uint8List` image is only available if `returnImage` is set to `true`.
+                        final Uint8List? image = capture.image;
+                        debugPrint("Barcode image: $image");
+
+                        /// row data of the barcode
+                        final Object? raw = capture.raw;
+                        debugPrint("Barcode raw: $raw");
+
+                        /// List of scanned barcodes if any
+                        final List<Barcode> barcodes = capture.barcodes;
+                        debugPrint("Barcode list: $barcodes");
+                      },
+                      validator: (value) {
+                        if (value.barcodes.isEmpty) {
+                          return false;
+                        }
+                        if (!(value.barcodes.first.rawValue
+                                ?.contains('flutter.dev') ??
+                            false)) {
+                          return false;
+                        }
+                        return true;
+                      },
+                    ),
+                  ),
+                );
+              },
             ),
-            Text(
-              '$_points',
-              style: TextStyle(fontSize: 48),
-            ),
-            SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  onPressed: _addPoints,
-                  child: Text('ポイントを追加'),
-                ),
-                SizedBox(width: 20),
-                ElevatedButton(
-                  onPressed: _subtractPoints,
-                  child: Text('ポイントを減算'),
-                ),
-              ],
-            ),
+            Text(barcode),
           ],
         ),
       ),
