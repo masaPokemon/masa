@@ -9,7 +9,7 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  qrcode_reader_web: ^1.1.2
+  mobile_scanner: ^3.4.1
 
 dev_dependencies:
   flutter_test:
