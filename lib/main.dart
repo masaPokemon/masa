@@ -1,89 +1,145 @@
-// Copyright 2013 The Flutter Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
-// ignore_for_file: public_member_api_docs
-
-import 'dart:async';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:webview_flutter_platform_interface/webview_flutter_platform_interface.dart';
-import 'package:webview_flutter_web/webview_flutter_web.dart';
+import 'dart:async';
+
+import 'package:bluetooth_print_plus/bluetooth_print_plus.dart';
+
+import 'function_page.dart';
 
 void main() {
-  WebViewPlatform.instance = WebWebViewPlatform();
-  runApp(const MaterialApp(home: _WebViewExample()));
+  runApp(const MyApp());
 }
 
-class _WebViewExample extends StatefulWidget {
-  const _WebViewExample();
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
-  _WebViewExampleState createState() => _WebViewExampleState();
+  Widget build(BuildContext context) {
+    // TODO: implement build
+    return const MaterialApp(
+      home: HomePage(),
+    );
+  }
 }
 
-class _WebViewExampleState extends State<_WebViewExample> {
-  final PlatformWebViewController _controller = PlatformWebViewController(
-    const PlatformWebViewControllerCreationParams(),
-  )..loadRequest(
-      LoadRequestParams(
-        uri: Uri.parse('https://flutter.dev'),
-      ),
-    );
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
+  final _bluetoothPrintPlus = BluetoothPrintPlus.instance;
+  bool _connected = false;
+  BluetoothDevice? _device;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => initBluetooth());
+  }
+
+  Future<void> initBluetooth() async {
+    bool isConnected = await _bluetoothPrintPlus.isConnected ?? false;
+    _bluetoothPrintPlus.state.listen((state) {
+      print('********** cur device status: $state **********');
+      switch (state) {
+        case BluetoothPrintPlus.connected:
+          setState(() {
+            if (_device == null) return;
+            _connected = true;
+            _bluetoothPrintPlus.stopScan();
+            Navigator.of(context).push(
+                MaterialPageRoute(builder: (ctx) => FunctionPage(_device!)));
+          });
+          break;
+        case BluetoothPrintPlus.disconnected:
+          setState(() {
+            _device = null;
+            _connected = false;
+          });
+          break;
+        default:
+          break;
+      }
+    });
+
+    if (!mounted) return;
+
+    if (isConnected) {
+      setState(() {
+        _connected = true;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Flutter WebView example'),
-        actions: <Widget>[
-          _SampleMenu(_controller),
-        ],
+        title: const Text('BluetoothPrintPlus'),
       ),
-      body: PlatformWebViewWidget(
-        PlatformWebViewWidgetCreationParams(controller: _controller),
-      ).build(context),
-    );
-  }
-}
-
-enum _MenuOptions {
-  doPostRequest,
-}
-
-class _SampleMenu extends StatelessWidget {
-  const _SampleMenu(this.controller);
-
-  final PlatformWebViewController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return PopupMenuButton<_MenuOptions>(
-      onSelected: (_MenuOptions value) {
-        switch (value) {
-          case _MenuOptions.doPostRequest:
-            _onDoPostRequest(controller);
-        }
-      },
-      itemBuilder: (BuildContext context) => <PopupMenuItem<_MenuOptions>>[
-        const PopupMenuItem<_MenuOptions>(
-          value: _MenuOptions.doPostRequest,
-          child: Text('Post Request'),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+                child: StreamBuilder<List<BluetoothDevice>>(
+              stream: _bluetoothPrintPlus.scanResults,
+              initialData: [],
+              builder: (c, snapshot) => ListView(
+                children: snapshot.data!
+                    .map((d) => Container(
+                          padding: const EdgeInsets.only(
+                              left: 10, right: 10, bottom: 5),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                  child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(d.name ?? ''),
+                                  Text(
+                                    d.address ?? 'null',
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                        fontSize: 12, color: Colors.grey),
+                                  ),
+                                  const Divider(),
+                                ],
+                              )),
+                              const SizedBox(
+                                width: 10,
+                              ),
+                              ElevatedButton(
+                                onPressed: () async {
+                                  _bluetoothPrintPlus.connect(d);
+                                  _device = d;
+                                },
+                                child: const Text("connect"),
+                              )
+                            ],
+                          ),
+                        ))
+                    .toList(),
+              ),
+            )),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+              width: double.infinity,
+              height: 60,
+              child: ElevatedButton(
+                child: const Text("Search", style: TextStyle(fontSize: 16)),
+                onPressed: () {
+                  _bluetoothPrintPlus.isAvailable;
+                  _bluetoothPrintPlus.startScan(
+                      timeout: const Duration(seconds: 30));
+                },
+              ),
+            )
+          ],
         ),
-      ],
+      ),
     );
-  }
-
-  Future<void> _onDoPostRequest(PlatformWebViewController controller) async {
-    final LoadRequestParams params = LoadRequestParams(
-      uri: Uri.parse('https://httpbin.org/post'),
-      method: LoadRequestMethod.post,
-      headers: const <String, String>{
-        'foo': 'bar',
-        'Content-Type': 'text/plain'
-      },
-      body: Uint8List.fromList('Test Body'.codeUnits),
-    );
-    await controller.loadRequest(params);
   }
 }
