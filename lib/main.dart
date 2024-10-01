@@ -10,21 +10,18 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'ポイントシステム',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: PointSystem(),
+      home: PointsPage(),
     );
   }
 }
 
-class PointSystem extends StatefulWidget {
+class PointsPage extends StatefulWidget {
   @override
-  _PointSystemState createState() => _PointSystemState();
+  _PointsPageState createState() => _PointsPageState();
 }
 
-class _PointSystemState extends State<PointSystem> {
-  int _points = 0;
+class _PointsPageState extends State<PointsPage> {
+  final PointsManager _pointsManager = PointsManager();
 
   @override
   void initState() {
@@ -32,36 +29,13 @@ class _PointSystemState extends State<PointSystem> {
     _loadPoints();
   }
 
-  // ポイントをロードする関数
-  void _loadPoints() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _points = prefs.getInt('points') ?? 0;
-    });
+  // ポイントをロード
+  Future<void> _loadPoints() async {
+    await _pointsManager.loadPoints();
+    setState(() {});
   }
 
-  // ポイントを保存する関数
-  void _savePoints() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setInt('points', _points);
-  }
-
-  // ポイントを加算する関数
-  void _incrementPoints() {
-    setState(() {
-      _points++;
-    });
-    _savePoints();
-  }
-
-  // ポイントを減算する関数
-  void _decrementPoints() {
-    setState(() {
-      _points--;
-    });
-    _savePoints();
-  }
-
+  // UIの構築
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -73,30 +47,61 @@ class _PointSystemState extends State<PointSystem> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Text(
-              '現在のポイント:',
-            ),
-            Text(
-              '$_points',
-              style: Theme.of(context).textTheme.headline4,
+              '現在のポイント: ${_pointsManager.points}',
+              style: TextStyle(fontSize: 24),
             ),
             SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  onPressed: _incrementPoints,
-                  child: Text('ポイント加算'),
-                ),
-                SizedBox(width: 20),
-                ElevatedButton(
-                  onPressed: _decrementPoints,
-                  child: Text('ポイント減算'),
-                ),
-              ],
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _pointsManager.addPoints(10); // 10ポイント加算
+                });
+              },
+              child: Text('10ポイント加算'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _pointsManager.subtractPoints(5); // 5ポイント減算
+                });
+              },
+              child: Text('5ポイント減算'),
             ),
           ],
         ),
       ),
     );
+  }
+}
+
+
+class PointsManager {
+  int _points = 0;
+
+  // ポイントを取得
+  int get points => _points;
+
+  // ポイントを加算
+  void addPoints(int value) {
+    _points += value;
+    _savePoints();
+  }
+
+  // ポイントを減算
+  void subtractPoints(int value) {
+    _points -= value;
+    _savePoints();
+  }
+
+  // ポイントを保存
+  Future<void> _savePoints() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('points', _points);
+  }
+
+  // ポイントをロード
+  Future<void> loadPoints() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    _points = prefs.getInt('points') ?? 0; // デフォルトは0
   }
 }
