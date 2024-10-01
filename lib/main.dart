@@ -1,5 +1,9 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+void main() {
+  runApp(_PointsPageState())
+}
+
 class _PointsPageState extends State<PointsPage> {
   int points = 0;
 
