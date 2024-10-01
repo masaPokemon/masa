@@ -1,76 +1,80 @@
 import 'package:flutter/material.dart';
-import 'scanner.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'コードスキャナー',
+      title: 'QRコードスキャナー',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.greenAccent),
-        useMaterial3: true,
+        primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'コードスキャナー'),
+      home: QRCodeScanner(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
-
+class QRCodeScanner extends StatefulWidget {
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  _QRCodeScannerState createState() => _QRCodeScannerState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _QRCodeScannerState extends State<QRCodeScanner> {
+  MobileScannerController cameraController = MobileScannerController();
+  int points = 0;
+
+  void onDetect(MobileScannerCapture capture) {
+    final String? code = capture.barcodes.first.rawValue;
+    if (code != null) {
+      // QRコードの内容に応じてポイントを加算
+      setState(() {
+        points += 10; // 例えば、各QRコードに対して10ポイントを加算
+      });
+      // スキャン結果を表示
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text('QRコードが検出されました'),
+            content: Text('コード: $code\nポイント: $points'),
+            actions: [
+              TextButton(
+                child: Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
+        title: Text('QRコードスキャナー'),
       ),
-      body: Center(
-        child: ElevatedButton(
-          // 押したらスキャンの画面に入るボタン
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => const ScannerWidget(),
-              ),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            elevation: 20, // ボタンが画面から浮かぶ高さ（影で現す）
-            fixedSize: const Size.fromHeight(300), // ボタンの大きさ
-            backgroundColor: const Color(0xFFAADDCC), // ボタンの背景の色
-            side:
-                const BorderSide(color: Color(0xFF44AA66), width: 6), // ボタンの枠線
+      body: Column(
+        children: [
+          Expanded(
+            child: MobileScanner(
+              controller: cameraController,
+              onDetect: onDetect,
+            ),
           ),
-          child: const Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.qr_code_scanner_sharp, // QRスキャンのアイコン
-                size: 120,
-              ),
-              Text(
-                'スキャンを始める',
-                style: TextStyle(fontSize: 36),
-              )
-            ],
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text('獲得ポイント: $points', style: TextStyle(fontSize: 24)),
           ),
-        ),
+        ],
       ),
     );
   }
 }
-
