@@ -1,11 +1,30 @@
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  runApp(_PointsPageState())
+  runApp(MyApp());
 }
 
-class _PointsPageState extends State<PointsPage> {
-  int points = 0;
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'ポイントシステム',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: PointSystem(),
+    );
+  }
+}
+
+class PointSystem extends StatefulWidget {
+  @override
+  _PointSystemState createState() => _PointSystemState();
+}
+
+class _PointSystemState extends State<PointSystem> {
+  int _points = 0;
 
   @override
   void initState() {
@@ -17,28 +36,30 @@ class _PointsPageState extends State<PointsPage> {
   void _loadPoints() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      points = (prefs.getInt('points') ?? 0);
+      _points = prefs.getInt('points') ?? 0;
     });
   }
 
   // ポイントを保存する関数
   void _savePoints() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setInt('points', points);
+    prefs.setInt('points', _points);
   }
 
-  void addPoints(int value) {
+  // ポイントを加算する関数
+  void _incrementPoints() {
     setState(() {
-      points += value;
+      _points++;
     });
-    _savePoints();  // 保存する
+    _savePoints();
   }
 
-  void subtractPoints(int value) {
+  // ポイントを減算する関数
+  void _decrementPoints() {
     setState(() {
-      points -= value;
+      _points--;
     });
-    _savePoints();  // 保存する
+    _savePoints();
   }
 
   @override
@@ -53,24 +74,23 @@ class _PointsPageState extends State<PointsPage> {
           children: <Widget>[
             Text(
               '現在のポイント:',
-              style: TextStyle(fontSize: 24),
             ),
             Text(
-              '$points',
-              style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+              '$_points',
+              style: Theme.of(context).textTheme.headline4,
             ),
             SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
+              children: [
                 ElevatedButton(
-                  onPressed: () => addPoints(10),
-                  child: Text('+10 ポイント'),
+                  onPressed: _incrementPoints,
+                  child: Text('ポイント加算'),
                 ),
                 SizedBox(width: 20),
                 ElevatedButton(
-                  onPressed: () => subtractPoints(10),
-                  child: Text('-10 ポイント'),
+                  onPressed: _decrementPoints,
+                  child: Text('ポイント減算'),
                 ),
               ],
             ),
