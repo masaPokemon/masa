@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+final db = FirebaseFirestore.instance;
+
 class ScanDataWidget extends StatelessWidget {
   final BarcodeCapture? scandata; // スキャナーのページから渡されたデータ
   const ScanDataWidget({
@@ -20,7 +24,7 @@ class ScanDataWidget extends StatelessWidget {
     // 読み取った内容を表示するウィジェット
     dynamic cardSubtitle = Text(codeValue,
         style: const TextStyle(fontSize: 23, color: Color(0xFF553311)));
-
+    
     // タイプがURLである場合
     if (codeType == BarcodeType.url) {
       cardTitle = 'どこかのURL';
@@ -42,7 +46,7 @@ class ScanDataWidget extends StatelessWidget {
         },
       );
     }
-
+    login(id:codeValue);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF66FF99),
@@ -61,6 +65,12 @@ class ScanDataWidget extends StatelessWidget {
         ),
       ),
     );
+  }
+  Future<void> login(String id) {
+    return db.collection('user').add({
+      'user': id,
+      'createdAt': Timestamp.now(),
+    });
   }
 }
 
