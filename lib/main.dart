@@ -59,6 +59,7 @@ class _HomePageState extends State<HomePage> {
             height: 400,
             child: MobileScanner(
               onDetect: (barcode, args) {
+                addPoints(100);
                 final String code = barcode.rawValue ?? '';
                 Navigator.of(context).pop();
                 // QRコードの値を整数に変換し、ポイントを追加または削除する
