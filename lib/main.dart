@@ -129,7 +129,7 @@ class QRCodeScanner extends StatelessWidget {
       ),
       body: MobileScanner(
         onDetect: (scandata) {
-          if (barcode.rawValue != null) {
+          if (scandata.rawValue != null) {
             final String code = scandata.rawValue!;
             onScanned(code);
             Navigator.pop(context); // スキャン後に前の画面に戻る
