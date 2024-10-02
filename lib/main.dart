@@ -57,7 +57,7 @@ class _PointsPageState extends State<PointsPage> {
                 MaterialPageRoute(
                   builder: (context) => const ScannerWidget(),
                 ),
-              );
+              ),
               child: Text('ポイントを計算'),
             ),
           ],
