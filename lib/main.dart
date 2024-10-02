@@ -5,7 +5,7 @@ import 'scanner.dart';
 void main() {
   runApp(MyApp());
 }
-final point = 0;
+
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -33,7 +33,6 @@ class _PointsPageState extends State<PointsPage> {
   // ポイントをロード
   Future<void> _loadPoints() async {
     await _pointsManager.loadPoints();
-    await _pointsManager.addPoints(point);
     setState(() {});
   }
 
