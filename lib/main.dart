@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 void main() {
   runApp(MyApp());
@@ -10,22 +10,22 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'ポイントシステム',
+      title: 'ポイント管理システム',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: PointSystem(),
+      home: PointPage(),
     );
   }
 }
 
-class PointSystem extends StatefulWidget {
+class PointPage extends StatefulWidget {
   @override
-  _PointSystemState createState() => _PointSystemState();
+  _PointPageState createState() => _PointPageState();
 }
 
-class _PointSystemState extends State<PointSystem> {
-  int points = 0;
+class _PointPageState extends State<PointPage> {
+  int _points = 0;
 
   @override
   void initState() {
@@ -33,63 +33,92 @@ class _PointSystemState extends State<PointSystem> {
     _loadPoints();
   }
 
-  // ポイントを読み込む
+  // ポイントの読み込み
   Future<void> _loadPoints() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final prefs = await SharedPreferences.getInstance();
     setState(() {
-      points = (prefs.getInt('points') ?? 0);
+      _points = prefs.getInt('points') ?? 0;
     });
   }
 
-  // ポイントを保存する
+  // ポイントの保存
   Future<void> _savePoints() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('points', points);
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setInt('points', _points);
   }
 
-  // QRコードをスキャンしたときの処理
-  void _handleQRCode(String code) {
-    int value = int.tryParse(code) ?? 0;
+  // ポイントを追加
+  void _addPoints(int value) {
     setState(() {
-      points += value; // ポイントを追加
+      _points += value;
     });
     _savePoints();
   }
 
-  // ポイントを減らす処理
-  void _subtractPoints() {
+  // ポイントを削除
+  void _removePoints(int value) {
     setState(() {
-      points -= 1; // 例として1ポイント減らす
+      _points -= value;
     });
     _savePoints();
+  }
+
+  // QRコードを読み取ってポイントを追加または削除
+  void _onQRViewCreated(String data) {
+    int? value = int.tryParse(data); // QRコードから取得した値を整数に変換
+    if (value != null) {
+      if (value > 0) {
+        _addPoints(value);  // ポイントを追加
+      } else {
+        _removePoints(-value);  // ポイントを削除
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('ポイント: $points'),
+        title: Text('ポイント管理システム'),
       ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            '現在のポイント: $points',
+            '現在のポイント: $_points',
             style: TextStyle(fontSize: 24),
           ),
+          SizedBox(height: 20),
           ElevatedButton(
-            onPressed: _subtractPoints,
-            child: Text('ポイントを1減らす'),
-          ),
-          Expanded(
-            child: MobileScanner(
-              onDetect: (barcode, args) {
-                final String code = barcode.rawValue ?? '';
-                _handleQRCode(code);
-              },
-            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => QRScannerPage(onQRViewCreated: _onQRViewCreated)),
+              );
+            },
+            child: Text('QRコードでポイントを追加/削除'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class QRScannerPage extends StatelessWidget {
+  final Function(String) onQRViewCreated;
+
+  QRScannerPage({required this.onQRViewCreated});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('QRコードをスキャン')),
+      body: MobileScanner(
+        onDetect: (barcode, args) {
+          final String code = barcode.rawValue ?? '';
+          onQRViewCreated(code);
+          Navigator.pop(context);  // スキャン後、元の画面に戻る
+        },
       ),
     );
   }
