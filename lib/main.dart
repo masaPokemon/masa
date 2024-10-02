@@ -33,7 +33,7 @@ class _ScannerWidgetState extends State<ScannerWidget>
             fit: BoxFit.contain,
             onDetect: (scandata) {
               setState(() {
-                _pointsManager.addPoints(10);
+                _pointsManager.addPoints(_pointsManager.points + 10);
                 controller.stop();
                 Navigator.of(context).pushReplacement(
                   MaterialPageRoute(
@@ -129,8 +129,6 @@ class PointsManager {
   void addPoints(int value) {
     _points += value;
     _savePoints();
-    // ポイントを取得
-    int get points => _points;
   }
 
   // ポイントを減算
