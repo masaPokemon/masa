@@ -1,100 +1,129 @@
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Hive.initFlutter();
-  await Hive.openBox('pointsBox'); // ポイントデータを保存するためのBoxを開く
-  runApp(MyApp());
+void main() {
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'ポイントシステム',
-      home: HomePage(),
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: const PointScreen(),
     );
   }
 }
 
-class HomePage extends StatefulWidget {
+class PointScreen extends StatefulWidget {
+  const PointScreen({Key? key}) : super(key: key);
+
   @override
-  _HomePageState createState() => _HomePageState();
+  _PointScreenState createState() => _PointScreenState();
 }
 
-class _HomePageState extends State<HomePage> {
-  final Box pointsBox = Hive.box('pointsBox');
-  int points = 0;
+class _PointScreenState extends State<PointScreen> {
+  int _points = 0;
 
   @override
   void initState() {
     super.initState();
-    points = pointsBox.get('points', defaultValue: 0);
+    _loadPoints();
   }
 
-  void addPoints(int amount) {
+  // ポイントをロードする
+  void _loadPoints() async {
+    final prefs = await SharedPreferences.getInstance();
     setState(() {
-      points += amount;
-      pointsBox.put('points', points);
+      _points = prefs.getInt('points') ?? 0;
     });
   }
 
-  void removePoints(int amount) {
-    setState(() {
-      points -= amount;
-      pointsBox.put('points', points);
-    });
+  // ポイントを保存する
+  void _savePoints() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setInt('points', _points);
   }
 
-  void scanQRCode() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          content: SizedBox(
-            width: double.maxFinite,
-            height: 400,
-            child: MobileScanner(
-              onDetect: (barcode, args) {
-                addPoints(100);
-                final String code = barcode.rawValue ?? '';
-                Navigator.of(context).pop();
-                // QRコードの値を整数に変換し、ポイントを追加または削除する
-                int value = int.tryParse(code) ?? 0;
-                if (value > 0) {
-                  addPoints(value);
-                } else if (value < 0) {
-                  removePoints(-value); // 負の値で削除
-                }
-              },
-            ),
-          ),
-        );
-      },
-    );
+  // ポイントを増減させる
+  void _updatePoints(int change) {
+    setState(() {
+      _points += change;
+      if (_points < 0) {
+        _points = 0;
+      }
+    });
+    _savePoints();
+  }
+
+  // QRコードを読み取り、ポイントを追加/削除
+  void _onQRCodeScanned(String code) {
+    int? value = int.tryParse(code);
+    if (value != null) {
+      _updatePoints(value);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('ポイントシステム'),
+        title: const Text('ポイント管理システム'),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('現在のポイント: $points'),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: scanQRCode,
-              child: Text('QRコードをスキャン'),
-            ),
-          ],
-        ),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Text('現在のポイント: $_points', style: const TextStyle(fontSize: 24)),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => QRScanner(onScanned: _onQRCodeScanned)),
+              );
+            },
+            child: const Text('QRコードでポイントを変更'),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          setState(() {
+            _points = 0;
+            _savePoints();
+          });
+        },
+        child: const Icon(Icons.refresh),
+      ),
+    );
+  }
+}
+
+class QRScanner extends StatelessWidget {
+  final Function(String) onScanned;
+
+  const QRScanner({Key? key, required this.onScanned}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('QRコードスキャン'),
+      ),
+      body: MobileScanner(
+        onDetect: (barcode, args) {
+          if (barcode.rawValue != null) {
+            final String code = barcode.rawValue!;
+            onScanned(code);
+            Navigator.pop(context);
+          }
+        },
       ),
     );
   }
