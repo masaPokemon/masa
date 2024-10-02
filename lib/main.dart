@@ -129,6 +129,8 @@ class PointsManager {
   void addPoints(int value) {
     _points += value;
     _savePoints();
+    // ポイントを取得
+    int get points => _points;
   }
 
   // ポイントを減算
