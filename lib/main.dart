@@ -53,11 +53,15 @@ class _PointsPageState extends State<PointsPage> {
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const ScannerWidget(),
-                ),
-              ),
+              onPressed: () {
+                setState(() {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const ScannerWidget(),
+                    ),
+                  ),
+                });
+              },
               child: Text('ポイントを計算'),
             ),
           ],
