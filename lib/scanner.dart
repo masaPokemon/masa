@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:sukyan/scandata.dart';
+import 'scandata.dart';
+import 'main.dart';
 
 class ScannerWidget extends StatefulWidget {
   const ScannerWidget({super.key});
