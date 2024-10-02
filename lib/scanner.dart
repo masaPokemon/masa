@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'scandata.dart';
+import 'main.dart';
 
 class ScannerWidget extends StatefulWidget {
   const ScannerWidget({super.key});
@@ -38,13 +39,14 @@ class _ScannerWidgetState extends State<ScannerWidget>
                   // QRコードかバーコードが見つかった後すぐ実行する関数
                   onDetect: (scandata) {
                     setState(() {
+                      PointsManager.addPoints(value: scandata);
                       controller.stop(); // まずはカメラを止める
                       // 結果を表す画面に切り替える
                       Navigator.of(context).pushReplacement(
                         MaterialPageRoute(
                           builder: (context) {
                             // scandataはスキャンの結果を収める関数であり、これをデータ表示ページに渡す
-                            return ScanDataWidget(scandata: scandata);
+                            return MyApp();
                           },
                         ),
                       );
