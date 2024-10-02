@@ -6,70 +6,26 @@ void main() {
   runApp(MyApp());
 }
 
-class ScannerWidget extends StatefulWidget {
-  const ScannerWidget({super.key});
-
-  @override
-  State<ScannerWidget> createState() => _ScannerWidgetState();
-}
-
-class _ScannerWidgetState extends State<ScannerWidget>
-    with SingleTickerProviderStateMixin {
-  MobileScannerController controller = MobileScannerController();
-  final PointsManager _pointsManager = PointsManager();
-  
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF66FF99),
-        title: const Text('スキャンしよう'),
-      ),
-      backgroundColor: Colors.black,
-      body: Builder(
-        builder: (context) {
-          return MobileScanner(
-            controller: controller,
-            fit: BoxFit.contain,
-            onDetect: (scandata) {
-              _pointsManager.addPoints(10);
-              setState(() {
-                controller.stop();
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (context) {
-                      return MyApp();
-                    },
-                  ),
-                );
-              });
-            },
-          );
-        },
-      ),
-    );
-  }
-}
-
-
-
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'ポイントシステム',
-      home: PointsPage(),
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: PointScreen(),
     );
   }
 }
 
-class PointsPage extends StatefulWidget {
+class PointScreen extends StatefulWidget {
   @override
-  _PointsPageState createState() => _PointsPageState();
+  _PointScreenState createState() => _PointScreenState();
 }
 
-class _PointsPageState extends State<PointsPage> {
-  final PointsManager _pointsManager = PointsManager();
+class _PointScreenState extends State<PointScreen> {
+  int _points = 0;
 
   @override
   void initState() {
@@ -77,75 +33,88 @@ class _PointsPageState extends State<PointsPage> {
     _loadPoints();
   }
 
-  // ポイントをロード
-  Future<void> _loadPoints() async {
-    await _pointsManager.loadPoints();
-    setState(() {});
+  // ポイントをロードする
+  void _loadPoints() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _points = prefs.getInt('points') ?? 0;
+    });
   }
 
-  // UIの構築
+  // ポイントを保存する
+  void _savePoints() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setInt('points', _points);
+  }
+
+  // ポイントを追加・削除する
+  void _updatePoints(int value) {
+    setState(() {
+      _points += value;
+      if (_points < 0) _points = 0; // ポイントがマイナスにならないようにする
+    });
+    _savePoints();
+  }
+
+  // QRコードを読み取った際の処理
+  void _onQRCodeScanned(String value) {
+    int scannedValue = int.tryParse(value) ?? 0;
+    _updatePoints(scannedValue);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('ポイントシステム'),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              '現在のポイント: ${_pointsManager.points}',
-              style: TextStyle(fontSize: 24),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const ScannerWidget(),
-                    ),
-                  );
-                });
-              },
-              child: Text('ポイントを計算'),
-            ),
-          ],
-        ),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            '現在のポイント: $_points',
+            style: TextStyle(fontSize: 24),
+          ),
+          SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => QRScannerScreen(
+                    onQRCodeScanned: _onQRCodeScanned,
+                  ),
+                ),
+              );
+            },
+            child: Text('QRコードをスキャン'),
+          ),
+        ],
       ),
     );
   }
 }
 
+class QRScannerScreen extends StatelessWidget {
+  final Function(String) onQRCodeScanned;
 
-class PointsManager {
-  int _points = 0;
+  QRScannerScreen({required this.onQRCodeScanned});
 
-  // ポイントを取得
-  int get points => _points;
-
-  // ポイントを加算
-  void addPoints(int value) {
-    _points += value;
-    _savePoints();
-  }
-
-  // ポイントを減算
-  void subtractPoints(int value) {
-    _points -= value;
-    _savePoints();
-  }
-
-  // ポイントを保存
-  Future<void> _savePoints() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('points', _points);
-  }
-
-  // ポイントをロード
-  Future<void> loadPoints() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    _points = prefs.getInt('points') ?? 0; // デフォルトは0
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('QRコードスキャナー'),
+      ),
+      body: MobileScanner(
+        onDetect: (barcode, args) {
+          if (barcode.rawValue != null) {
+            final String code = barcode.rawValue!;
+            onQRCodeScanned(code);
+            Navigator.pop(context);  // スキャン完了後、前の画面に戻る
+          }
+        },
+      ),
+    );
   }
 }
