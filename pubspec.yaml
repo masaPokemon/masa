@@ -8,9 +8,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  shared_preferences: ^2.0.8 # データの保存
-  mobile_scanner: ^3.0.0 # QRコード読み取り
-
+  shared_preferences: ^2.0.15
+  mobile_scanner: ^2.0.0
 
 dev_dependencies:
   flutter_test:
