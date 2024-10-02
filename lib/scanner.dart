@@ -35,7 +35,7 @@ class _ScannerWidgetState extends State<ScannerWidget>
                 Navigator.of(context).pushReplacement(
                   MaterialPageRoute(
                     builder: (context) {
-                      return ScanDataWidget(scandata: scandata);
+                      return MyApp();
                     },
                   ),
                 );
