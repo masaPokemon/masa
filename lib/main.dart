@@ -80,7 +80,6 @@ class PointsManager {
 
   // ポイントを加算
   void addPoints(int value) {
-    loadPoints();
     _points += value;
     _savePoints();
   }
