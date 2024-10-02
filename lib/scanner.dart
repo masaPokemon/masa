@@ -30,6 +30,7 @@ class _ScannerWidgetState extends State<ScannerWidget>
             fit: BoxFit.contain,
             onDetect: (scandata) {
               setState(() {
+                _pointsManager.loadPoints();
                 _pointsManager.addPoints(10);
                 controller.stop();
                 Navigator.of(context).pushReplacement(
