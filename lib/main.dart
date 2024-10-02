@@ -58,7 +58,7 @@ class _PointsPageState extends State<PointsPage> {
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => const ScannerWidget(),
-                    );
+                    ),
                   );
                 });
               },
