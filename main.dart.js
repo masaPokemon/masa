@@ -55551,8 +55551,9 @@ A.nd.prototype={
 M(a){return A.abl(A.a8G(B.Jb),new A.rj(new A.Vx(this,a),null),null)}}
 A.Vx.prototype={
 $2(a,b){var s=a.d
-if(s!=null){this.a.c.$1(s)
-A.AB(this.b).Fe(null)}},
+s.toString
+this.a.c.$1(s)
+A.AB(this.b).Fe(null)},
 $S:372}
 A.a51.prototype={
 $0(){return A.apT()},
