@@ -118,12 +118,10 @@ class QRScanner extends StatelessWidget {
       ),
       body: MobileScanner(
         onDetect: (barcode, args) {
-          if (barcode.rawValue != null) {
-            final String code = barcode.rawValue!;
-            onScanned(code);
-            Navigator.pop(context);
-          }
-        },
+          final String code = barcode.rawValue!;
+          onScanned(code);
+          Navigator.pop(context);
+        }
       ),
     );
   }
