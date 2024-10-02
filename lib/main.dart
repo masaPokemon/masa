@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -14,17 +16,19 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: PointScreen(),
+      home: const PointsPage(),
     );
   }
 }
 
-class PointScreen extends StatefulWidget {
+class PointsPage extends StatefulWidget {
+  const PointsPage({Key? key}) : super(key: key);
+
   @override
-  _PointScreenState createState() => _PointScreenState();
+  _PointsPageState createState() => _PointsPageState();
 }
 
-class _PointScreenState extends State<PointScreen> {
+class _PointsPageState extends State<PointsPage> {
   int _points = 0;
 
   @override
@@ -33,88 +37,75 @@ class _PointScreenState extends State<PointScreen> {
     _loadPoints();
   }
 
-  // ポイントをロードする
-  void _loadPoints() async {
+  Future<void> _loadPoints() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       _points = prefs.getInt('points') ?? 0;
     });
   }
 
-  // ポイントを保存する
-  void _savePoints() async {
+  Future<void> _savePoints() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setInt('points', _points);
   }
 
-  // ポイントを追加・削除する
   void _updatePoints(int value) {
     setState(() {
       _points += value;
-      if (_points < 0) _points = 0; // ポイントがマイナスにならないようにする
+      _savePoints();
     });
-    _savePoints();
   }
 
-  // QRコードを読み取った際の処理
-  void _onQRCodeScanned(String value) {
-    int scannedValue = int.tryParse(value) ?? 0;
-    _updatePoints(scannedValue);
+  void _scanQRCode() async {
+    String? scannedValue = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const QRCodeScanner(),
+      ),
+    );
+
+    if (scannedValue != null) {
+      int value = int.tryParse(scannedValue) ?? 0;
+      _updatePoints(value);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('ポイントシステム'),
+        title: const Text('ポイントシステム'),
       ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            '現在のポイント: $_points',
-            style: TextStyle(fontSize: 24),
-          ),
-          SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => QRScannerScreen(
-                    onQRCodeScanned: _onQRCodeScanned,
-                  ),
-                ),
-              );
-            },
-            child: Text('QRコードをスキャン'),
-          ),
-        ],
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              '現在のポイント: $_points',
+              style: const TextStyle(fontSize: 24),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _scanQRCode,
+              child: const Text('QRコードをスキャン'),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class QRScannerScreen extends StatelessWidget {
-  final Function(String) onQRCodeScanned;
-
-  QRScannerScreen({required this.onQRCodeScanned});
+class QRCodeScanner extends StatelessWidget {
+  const QRCodeScanner({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('QRコードスキャナー'),
-      ),
-      body: MobileScanner(
-        onDetect: (barcode, args) {
-          if (barcode.rawValue != null) {
-            final String code = barcode.rawValue!;
-            onQRCodeScanned(code);
-            Navigator.pop(context);  // スキャン完了後、前の画面に戻る
-          }
-        },
-      ),
+    return MobileScanner(
+      onDetect: (barcode, args) {
+        if (barcode.rawValue != null) {
+          Navigator.of(context).pop(barcode.rawValue);
+        }
+      },
     );
   }
 }
