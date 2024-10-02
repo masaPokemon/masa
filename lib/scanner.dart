@@ -38,9 +38,9 @@ class _ScannerWidgetState extends State<ScannerWidget>
                   controller: controller,
                   fit: BoxFit.contain,
                   // QRコードかバーコードが見つかった後すぐ実行する関数
-                  onDetect: (scandata.length) {
+                  onDetect: (scandata) {
                     setState(() {
-                      _pointsManager.addPoints(scandata as int);
+                      _pointsManager.addPoints(scandata.length);
                       controller.stop(); // まずはカメラを止める
                       // 結果を表す画面に切り替える
                       Navigator.of(context).pushReplacement(
