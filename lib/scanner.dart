@@ -16,6 +16,7 @@ class _ScannerWidgetState extends State<ScannerWidget>
   MobileScannerController controller = MobileScannerController();
   bool isStarted = true; // カメラがオンしているかどうか
   double zoomFactor = 0.0; // ズームの程度。0から1まで。多いほど近い
+  final PointsManager _pointsManager = PointsManager();
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +40,7 @@ class _ScannerWidgetState extends State<ScannerWidget>
                   // QRコードかバーコードが見つかった後すぐ実行する関数
                   onDetect: (scandata) {
                     setState(() {
-                      PointsManager().addPoints(scandata);
+                      _pointsManager.addPoints(scandata);
                       controller.stop(); // まずはカメラを止める
                       // 結果を表す画面に切り替える
                       Navigator.of(context).pushReplacement(
