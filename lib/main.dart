@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'scanner.dart';
 
 void main() {
   runApp(MyApp());
@@ -52,20 +53,12 @@ class _PointsPageState extends State<PointsPage> {
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _pointsManager.addPoints(10); // 10ポイント加算
-                });
-              },
-              child: Text('10ポイント加算'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _pointsManager.subtractPoints(5); // 5ポイント減算
-                });
-              },
-              child: Text('5ポイント減算'),
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const ScannerWidget(),
+                ),
+              );
+              child: Text('ポイントを計算'),
             ),
           ],
         ),
