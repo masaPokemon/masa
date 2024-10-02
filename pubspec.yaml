@@ -8,11 +8,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^1.0.8
-  hive: ^2.2.1  # データ保存用
-  hive_flutter: ^1.1.0  # FlutterでのHive使用
-  mobile_scanner: ^2.0.0  # QRコード読み取り用
-
+  mobile_scanner: ^2.0.0
+  shared_preferences: ^2.0.15
 
 dev_dependencies:
   flutter_test:
