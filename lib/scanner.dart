@@ -43,12 +43,17 @@ class _ScannerWidgetState extends State<ScannerWidget>
                       _pointsManager.addPoints(scandata as int);
                       controller.stop(); // まずはカメラを止める
                       // 結果を表す画面に切り替える
-                      MyApp();
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (context) {
+                            return MyApp();
+                          },
+                        ),
+                      );
                     });
                   },
                 ),
               ),
-              // ズームを調整するスライダー
             ],
           );
         },
