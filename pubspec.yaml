@@ -9,8 +9,10 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  shared_preferences: ^2.0.15
-  mobile_scanner: ^2.0.0
+  hive: ^2.2.1  # データ保存用
+  hive_flutter: ^1.1.0  # FlutterでのHive使用
+  mobile_scanner: ^2.0.0  # QRコード読み取り用
+
 
 dev_dependencies:
   flutter_test:
