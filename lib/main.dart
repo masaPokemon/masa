@@ -47,7 +47,7 @@ class _QRCodeScannerState extends State<QRCodeScanner> {
 
   void _onQRViewCreated(String code) {
     setState(() {
-      _points += code;  // QRコードの文字の長さをポイントに加算
+      _points += code as int;  // QRコードの文字の長さをポイントに加算
       _savePoints();           // ポイントを保存
     });
     ScaffoldMessenger.of(context).showSnackBar(
