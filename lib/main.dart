@@ -8,7 +8,7 @@ class MyHome extends StatefulWidget {
   const MyHome({Key? key}) : super(key: key);
 
   @override
-  _MyHomeState createState() => _MyHomeState();
+  MyHomeState createState() => MyHomeState();
 }
 class _MyHomeState extends State<MyHome> {
   
@@ -56,7 +56,7 @@ class _MyHomeState extends State<MyHome> {
                   final String? rawValue = barcode.rawValue;
                   if (rawValue != null) {
                     debugPrint('Barcode found! $rawValue');
-                    MyHomeState._addPoints(rawValue.length); // 読み取った文字の長さでポイントを加算
+                    _addPoints(rawValue.length); // 読み取った文字の長さでポイントを加算
                   }
                 }
               },
