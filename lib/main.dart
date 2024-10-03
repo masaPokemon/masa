@@ -2,31 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-void main() => runApp(const MaterialApp(home: MyHome()));
+void main() {
+  runApp(const MaterialApp(home: MyHome()));
+}
 
 class MyHome extends StatefulWidget {
   const MyHome({Key? key}) : super(key: key);
 
   @override
-  MyHomeState createState() => MyHomeState();
+  _MyHomeState createState() => _MyHomeState();
 }
+
 class _MyHomeState extends State<MyHome> {
-  
   int _points = 0;
+  bool _isScanning = true;
 
   @override
   void initState() {
     super.initState();
-    _loadPoints(); // 起動時にポイントをロード
+    _loadPoints();
   }
 
-  // ポイントを保存する関数
-  Future<void> _savePoints() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('points', _points);
-  }
-
-  // ポイントをロードする関数
+  // SharedPreferencesからポイントを読み込む
   Future<void> _loadPoints() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -34,114 +31,106 @@ class _MyHomeState extends State<MyHome> {
     });
   }
 
-  // ポイントを加算する関数
-  void _addPoints(int length) {
-    setState(() {
-      _points += length;
-    });
-    _savePoints(); // ポイントを保存
+  // SharedPreferencesにポイントを保存する
+  Future<void> _savePoints() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('points', _points);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('QR Code Scanner')),
-      body: Column(
-        children: [
-          Expanded(
-            child: MobileScanner(
-              onDetect: (capture) {
-                final List<Barcode> barcodes = capture.barcodes;
-                for (final barcode in barcodes) {
-                  final String? rawValue = barcode.rawValue;
-                  if (rawValue != null) {
-                    debugPrint('Barcode found! $rawValue');
-                    _addPoints(rawValue.length); // 読み取った文字の長さでポイントを加算
-                  }
-                }
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              'Current Points: $_points',
-              style: const TextStyle(fontSize: 24),
-            ),
+  // QRコードを検出したときの処理
+  void _onDetect(BarcodeCapture capture) {
+    if (!_isScanning) return; // 連続スキャンを防止
+
+    final List<Barcode> barcodes = capture.barcodes;
+    for (final barcode in barcodes) {
+      final String? rawValue = barcode.rawValue;
+      if (rawValue != null) {
+        debugPrint('Barcode found! $rawValue');
+        _processScannedData(rawValue);
+        break; // 最初の有効なバーコードのみ処理
+      }
+    }
+  }
+
+  // スキャンしたデータを処理し、ポイントを計算・保存
+  void _processScannedData(String data) {
+    setState(() {
+      _isScanning = false; // スキャンを一時停止
+      _points += data.length; // 文字列の長さをポイントとして加算
+    });
+    _savePoints();
+
+    // ポップアップで結果を表示
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('スキャン完了'),
+        content: Text('読み取った文字列: $data\n獲得ポイント: ${data.length}ポイント'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              setState(() {
+                _isScanning = true; // スキャンを再開
+              });
+            },
+            child: const Text('OK'),
           ),
         ],
       ),
     );
   }
-}
 
-class MyHomeState extends State<MyHome> {
-  int _points = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadPoints(); // 起動時にポイントをロード
-  }
-
-  // ポイントを保存する関数
-  Future<void> _savePoints() async {
+  // ポイントをリセットする機能（必要に応じて）
+  Future<void> _resetPoints() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('points', _points);
-  }
-
-  // ポイントをロードする関数
-  Future<void> _loadPoints() async {
-    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('points', 0);
     setState(() {
-      _points = prefs.getInt('points') ?? 0;
+      _points = 0;
     });
-  }
-
-  // ポイントを加算する関数
-  void _addPoints(int length) {
-    setState(() {
-      _points += length;
-    });
-    _savePoints(); // ポイントを保存
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('QR Code Scanner')),
-      body: Column(
-        children: [
-          ElevatedButton(
-          // 押したらスキャンの画面に入るボタン
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => const _MyHomeState(),
-              ),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            elevation: 20, // ボタンが画面から浮かぶ高さ（影で現す）
-            fixedSize: const Size.fromHeight(300), // ボタンの大きさ
-            backgroundColor: const Color(0xFFAADDCC), // ボタンの背景の色
-            side:
-                const BorderSide(color: Color(0xFF44AA66), width: 6), // ボタンの枠線
-          ),
-          child: const Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.qr_code_scanner_sharp, // QRスキャンのアイコン
-                size: 120,
-              ),
-              Text(
-                'スキャンを始める',
-                style: TextStyle(fontSize: 36),
-              )
-            ],
+      appBar: AppBar(
+        title: const Text('QRコードスキャナー'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _resetPoints,
+            tooltip: 'ポイントをリセット',
           ),
         ],
+      ),
+      body: Stack(
+        children: [
+          MobileScanner(
+            allowDuplicates: false,
+            onDetect: _isScanning ? _onDetect : null,
+          ),
+          Positioned(
+            bottom: 20,
+            left: 20,
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              color: Colors.black54,
+              child: Text(
+                'ポイント: $_points',
+                style: const TextStyle(color: Colors.white, fontSize: 18),
+              ),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        child: Icon(_isScanning ? Icons.pause : Icons.play_arrow),
+        onPressed: () {
+          setState(() {
+            _isScanning = !_isScanning;
+          });
+        },
+        tooltip: _isScanning ? 'スキャンを停止' : 'スキャンを開始',
       ),
     );
   }
