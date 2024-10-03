@@ -3,12 +3,10 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -16,21 +14,18 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const QRCodeScannerScreen(),
+      home: QRCodeScanner(),
     );
   }
 }
 
-class QRCodeScannerScreen extends StatefulWidget {
-  const QRCodeScannerScreen({Key? key}) : super(key: key);
-
+class QRCodeScanner extends StatefulWidget {
   @override
-  _QRCodeScannerScreenState createState() => _QRCodeScannerScreenState();
+  _QRCodeScannerState createState() => _QRCodeScannerState();
 }
 
-class _QRCodeScannerScreenState extends State<QRCodeScannerScreen> {
+class _QRCodeScannerState extends State<QRCodeScanner> {
   int _points = 0;
-  String? _scannedData;
 
   @override
   void initState() {
@@ -38,7 +33,6 @@ class _QRCodeScannerScreenState extends State<QRCodeScannerScreen> {
     _loadPoints();
   }
 
-  // ポイントをロードする
   Future<void> _loadPoints() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -46,56 +40,42 @@ class _QRCodeScannerScreenState extends State<QRCodeScannerScreen> {
     });
   }
 
-  // ポイントを保存する
-  Future<void> _savePoints(int points) async {
+  Future<void> _savePoints() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('points', points);
+    await prefs.setInt('points', _points);
   }
 
-  // QRコードをスキャンしてポイントを加算
-  void _onQRCodeScanned(String code) {
+  void _onQRViewCreated(String code) {
     setState(() {
-      _scannedData = code;
-      int pointsToAdd = code.length;
-      _points += pointsToAdd;
-      _savePoints(_points); // ポイントを保存
+      _points += code.length;  // QRコードの文字の長さをポイントに加算
+      _savePoints();           // ポイントを保存
     });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('ポイント: $_points')),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('QR Code Scanner'),
+        title: Text('QR Code Scanner'),
       ),
       body: Column(
         children: [
           Expanded(
-            flex: 2,
             child: MobileScanner(
-              onDetect: (barcode, args) {
-                if (barcode.rawValue != null) {
-                  _onQRCodeScanned(barcode.rawValue!);
+              onDetect: (capture) {
+                final List<Barcode> barcodes = capture.barcodes;
+                for (final Barcode barcode in barcodes) {
+                  _onQRViewCreated(barcode.rawValue!);
                 }
               },
             ),
           ),
-          Expanded(
-            flex: 1,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Scanned Data: ${_scannedData ?? 'No data'}',
-                  style: const TextStyle(fontSize: 16),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  'Points: $_points',
-                  style: const TextStyle(fontSize: 24),
-                ),
-              ],
-            ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text('現在のポイント: $_points'),
           ),
         ],
       ),
