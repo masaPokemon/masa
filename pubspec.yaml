@@ -9,9 +9,7 @@ dependencies:
   flutter:
     sdk: flutter
   mobile_scanner: ^4.0.0
-  flutter_riverpod: ^2.4.10
-  hooks_riverpod: ^2.4.10
-  riverpod_annotation: ^2.3.4
+  shared_preferences: ^2.0.15  # 永続的なデータ保存に使用
 
 dev_dependencies:
   riverpod_generator: ^2.3.11
