@@ -3,6 +3,78 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 void main() {
+  runApp(const MyApp());
+}
+
+class MyApp1 extends StatelessWidget {
+  const MyApp1({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      home: My1HomePage(),
+    );
+  }
+}
+
+class My1HomePage extends StatefulWidget {
+  const My1HomePage({Key? key}) : super(key: key);
+
+  @override
+  State<My1HomePage> createState() => _My1HomePageState();
+}
+
+class _My1HomePageState extends State<My1HomePage> {
+  String scannedValue = '';
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Flutter Demo QR Code Scanner'),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            SizedBox(
+              height: 600,
+              child: MobileScanner(
+                controller: MobileScannerController(
+                  detectionSpeed:
+                      DetectionSpeed.noDuplicates, // 同じ QR コードを連続でスキャンさせない
+                ),
+                onDetect: (capture) {
+                  // QR コード検出時の処理
+                  final List<Barcode> barcodes = capture.barcodes;
+                  final value = barcodes[0].rawValue;
+                  if (value != null) {
+                    // 検出した QR コードの値でデータを更新
+                    setState(() {
+                      _addPoints(value)
+                    });
+                    Navigator.pop(context);;
+                  }
+                },
+              ),
+            ),
+            Text(
+              scannedValue == '' ? 'QR コードをスキャンしてください。' : 'QRコードを検知しました。',
+              style: const TextStyle(fontSize: 15),
+            ),
+            // QR コードの値を表示
+            Text(scannedValue == '' ? "" : "value: $scannedValue"),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+
+
+void main() {
   runApp(MyApp());
 }
 
@@ -17,6 +89,35 @@ class MyApp extends StatelessWidget {
       home: PointManager(),
     );
   }
+}
+// ポイントをロードする
+Future<void> _loadPoints() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  setState(() {
+    _points = prefs.getInt(_prefsKey) ?? 0;
+  });
+}
+
+// ポイントを保存する
+Future<void> _savePoints() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  await prefs.setInt(_prefsKey, _points);
+}
+
+// ポイントを追加する
+void _addPoints(int value) {
+  setState(() {
+    _points += value;
+  });
+  _savePoints();
+}
+
+// ポイントを削除する
+void _removePoints(int value) {
+  setState(() {
+    _points = (_points - value < 0) ? 0 : _points - value;
+  });
+  _savePoints();
 }
 
 class PointManager extends StatefulWidget {
@@ -34,35 +135,7 @@ class _PointManagerState extends State<PointManager> {
     _loadPoints();
   }
 
-  // ポイントをロードする
-  Future<void> _loadPoints() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _points = prefs.getInt(_prefsKey) ?? 0;
-    });
-  }
-
-  // ポイントを保存する
-  Future<void> _savePoints() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_prefsKey, _points);
-  }
-
-  // ポイントを追加する
-  void _addPoints(int value) {
-    setState(() {
-      _points += value;
-    });
-    _savePoints();
-  }
-
-  // ポイントを削除する
-  void _removePoints(int value) {
-    setState(() {
-      _points = (_points - value < 0) ? 0 : _points - value;
-    });
-    _savePoints();
-  }
+  
 
   // QRコードスキャン時の処理
   void _onQRCodeScanned(String code) {
@@ -104,7 +177,7 @@ class _PointManagerState extends State<PointManager> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => QRCodeScanner(onScanned: _onQRCodeScanned),
+                  builder: (context) => MyApp1(),
                 ),
               );
             },
