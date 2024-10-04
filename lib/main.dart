@@ -47,10 +47,10 @@ class _QRCodeScannerState extends State<QRCodeScanner> {
 
   void _onQRViewCreated(String code) {
     setState(() {
-      if code.contains('-') {
+      if (code.contains('-')) {
         _points -= code.length;  // QRコードの文字の長さをポイントに減算
         _savePoints();           // ポイントを保存
-      } else {
+      }; else {
         _points += code.length;  // QRコードの文字の長さをポイントに加算
         _savePoints();           // ポイントを保存
       }
