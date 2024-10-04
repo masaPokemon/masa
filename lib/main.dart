@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+final List<Barcode> oldBarcodes;
+
 void main() {
   runApp(MyApp());
 }
@@ -26,7 +28,7 @@ class QRCodeScanner extends StatefulWidget {
 
 class _QRCodeScannerState extends State<QRCodeScanner> {
   int _points = 0;
-  final List<Barcode> oldBarcodes;
+  
 
   @override
   void initState() {
