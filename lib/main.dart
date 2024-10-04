@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-final List<Barcode> oldBarcodes;
-
 void main() {
   runApp(MyApp());
 }
@@ -52,11 +50,9 @@ class _QRCodeScannerState extends State<QRCodeScanner> {
     setState(() {
       
       if (text != code.length) {
-        text = code.length
+        text = code.length;
         if (code.contains('-')) {
           _points -= code.length;  // QRコードの文字の長さをポイントに減算
-          
-        
           _savePoints();           // ポイントを保存
         }else{
           _points += code.length;  // QRコードの文字の長さをポイントに加算
