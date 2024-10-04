@@ -28,7 +28,7 @@ class QRCodeScanner extends StatefulWidget {
 
 class _QRCodeScannerState extends State<QRCodeScanner> {
   int _points = 0;
-  
+  String text = "";
 
   @override
   void initState() {
@@ -50,12 +50,18 @@ class _QRCodeScannerState extends State<QRCodeScanner> {
 
   void _onQRViewCreated(String code) {
     setState(() {
-      if (code.contains('-')) {
-        _points -= code.length;  // QRコードの文字の長さをポイントに減算
-        _savePoints();           // ポイントを保存
-      }else{
-        _points += code.length;  // QRコードの文字の長さをポイントに加算
-        _savePoints();           // ポイントを保存
+      
+      if (text != code.length) {
+        text = code.length
+        if (code.contains('-')) {
+          _points -= code.length;  // QRコードの文字の長さをポイントに減算
+          
+        
+          _savePoints();           // ポイントを保存
+        }else{
+          _points += code.length;  // QRコードの文字の長さをポイントに加算
+          _savePoints();           // ポイントを保存
+        }
       }
     });
   }
@@ -71,14 +77,11 @@ class _QRCodeScannerState extends State<QRCodeScanner> {
           Expanded(
             child: MobileScanner(
               onDetect: (capture) {
-                if (oldBarcodes != capture.barcodes) {
-                  oldBarcodes = capture.barcodes;
-                  final List<Barcode> barcodes = capture.barcodes;
-                  for (final Barcode barcode in barcodes) {
-                    _onQRViewCreated(barcode.rawValue!);
-                  }
+                final List<Barcode> barcodes = capture.barcodes;
+                for (final Barcode barcode in barcodes) {
+                  _onQRViewCreated(barcode.rawValue!);
                 }
-              },
+              }
             ),
           ),
           Padding(
