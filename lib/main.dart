@@ -26,7 +26,7 @@ class QRCodeScanner extends StatefulWidget {
 
 class _QRCodeScannerState extends State<QRCodeScanner> {
   int _points = 0;
-  int text = "";
+  int text = 0;
 
   @override
   void initState() {
