@@ -69,9 +69,9 @@ class _QRCodeScannerState extends State<QRCodeScanner> {
           Expanded(
             child: MobileScanner(
               onDetect: (capture) {
-                if (capture.barcodes != capture.barcodes) {
-                  capture.barcodes = capture.barcodes;
-                  final List<Barcode> barcodes2 = capture.barcodes;
+                if (oldBarcodes != capture.barcodes) {
+                  oldBarcodes = capture.barcodes;
+                  final List<Barcode> barcodes = capture.barcodes;
                   for (final Barcode barcode in barcodes) {
                     _onQRViewCreated(barcode.rawValue!);
                   }
